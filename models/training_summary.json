@@ -1,0 +1,36 @@
+{
+  "best_model": "LogisticRegression",
+  "best_run_id": "392f915b19b14bc997ddaaf09dbc437f",
+  "best_f1": 0.9861111111111112,
+  "registered_model": "BreastCancerClassifier",
+  "registered_version": 1,
+  "all_results": [
+    {
+      "model": "LogisticRegression",
+      "run_id": "392f915b19b14bc997ddaaf09dbc437f",
+      "accuracy": 0.9824561403508771,
+      "precision": 0.9861111111111112,
+      "recall": 0.9861111111111112,
+      "f1_score": 0.9861111111111112,
+      "roc_auc": 0.9953703703703703
+    },
+    {
+      "model": "RandomForest",
+      "run_id": "ff66e60781644bed965f8d53f7efe089",
+      "accuracy": 0.956140350877193,
+      "precision": 0.958904109589041,
+      "recall": 0.9722222222222222,
+      "f1_score": 0.9655172413793104,
+      "roc_auc": 0.9932208994708995
+    },
+    {
+      "model": "GradientBoosting",
+      "run_id": "f0f22e423842490988e1409d58467c92",
+      "accuracy": 0.9473684210526315,
+      "precision": 0.9459459459459459,
+      "recall": 0.9722222222222222,
+      "f1_score": 0.958904109589041,
+      "roc_auc": 0.9877645502645502
+    }
+  ]
+}
