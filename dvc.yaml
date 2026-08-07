@@ -1,0 +1,17 @@
+stages:
+  prepare:
+    cmd: python src/utils.py
+    deps:
+      - src/utils.py
+    outs:
+      - data/breast_cancer.csv
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - src/utils.py
+      - data/breast_cancer.csv
+    outs:
+      - models/scaler.pkl
+      - models/training_summary.json

@@ -1,0 +1,14 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/utils.py
+    deps:
+    - path: src/utils.py
+      hash: md5
+      md5: 1c54aa3438fef191215bc330444ba79c
+      size: 3310
+    outs:
+    - path: data/breast_cancer.csv
+      hash: md5
+      md5: 24d9881fad8cfb3d94f5276d372e422b
+      size: 121955
