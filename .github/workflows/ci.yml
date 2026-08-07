@@ -81,6 +81,7 @@ jobs:
 
       - name: 🗂️ Generate dataset and train models
         run: |
+          mkdir -p mlruns
           python -c "import sys; sys.path.insert(0,'src'); from utils import generate_and_save_data; generate_and_save_data()"
           python src/train.py
 
