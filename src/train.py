@@ -3,6 +3,10 @@ train.py - MLflow-tracked training pipeline for Breast Cancer Classification.
 
 Trains 3 models, logs params/metrics/artifacts, and registers the best model
 in the MLflow Model Registry.
+
+Supports two backends:
+  - DagsHub (remote): set DAGSHUB_TOKEN env variable
+  - SQLite (local/CI): automatic fallback
 """
 
 import os
@@ -30,18 +34,43 @@ from sklearn.metrics import (
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import load_data, generate_and_save_data, preprocess, save_scaler, DATA_PATH, MODELS_DIR
 
-# ── MLflow Configuration ──────────────────────────────────────────────────────
-# Use SQLite backend so the Model Registry (which needs a DB) works without a server
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_MLFLOW_DIR = _PROJECT_ROOT / "mlruns"
-_MLFLOW_DIR.mkdir(exist_ok=True)
+# ── DagsHub / MLflow Configuration ───────────────────────────────────────────
+DAGSHUB_USERNAME = "akkshay0312"
+DAGSHUB_REPO     = "Capstone-Project---MLOps-Pipeline"
+DAGSHUB_TOKEN    = os.environ.get("DAGSHUB_TOKEN", "")
 
-# For the artifact store we can use a plain path; for the registry we need sqlite
-MLFLOW_TRACKING_URI = os.environ.get(
-    "MLFLOW_TRACKING_URI",
-    f"sqlite:///{(_PROJECT_ROOT / 'mlflow.db').as_posix()}",
-)
-EXPERIMENT_NAME = "BreastCancerClassification"
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+EXPERIMENT_NAME      = "BreastCancerClassification"
+REGISTERED_MODEL_NAME = "BreastCancerClassifier"
+
+
+def _setup_mlflow():
+    """
+    Configure MLflow tracking:
+      - If DAGSHUB_TOKEN is set  → use DagsHub remote tracking server
+      - Otherwise               → fall back to local SQLite
+    """
+    if DAGSHUB_TOKEN:
+        print("[mlflow] Using DagsHub remote tracking...")
+        try:
+            import dagshub
+            dagshub.init(
+                repo_owner=DAGSHUB_USERNAME,
+                repo_name=DAGSHUB_REPO,
+                mlflow=True,
+            )
+            print(f"[mlflow] Tracking URI: https://dagshub.com/{DAGSHUB_USERNAME}/{DAGSHUB_REPO}.mlflow")
+            return
+        except Exception as e:
+            print(f"[mlflow] DagsHub init failed ({e}), falling back to SQLite.")
+
+    # Fallback: local SQLite backend
+    sqlite_uri = f"sqlite:///{(_PROJECT_ROOT / 'mlflow.db').as_posix()}"
+    mlflow.set_tracking_uri(sqlite_uri)
+    print(f"[mlflow] Using local SQLite tracking: {sqlite_uri}")
+
+EXPERIMENT_NAME      = "BreastCancerClassification"
 REGISTERED_MODEL_NAME = "BreastCancerClassifier"
 
 # ── Model Definitions ─────────────────────────────────────────────────────────
@@ -94,7 +123,7 @@ def evaluate(model, X_test, y_test) -> dict:
 
 def run_training():
     # ── Setup ─────────────────────────────────────────────────────────────────
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    _setup_mlflow()
     mlflow.set_experiment(EXPERIMENT_NAME)
 
     # Load / generate data
@@ -145,10 +174,10 @@ def run_training():
             # Log scaler artifact
             mlflow.log_artifact(scaler_path)
 
-            # Log model artifact (use 'name' instead of deprecated 'artifact_path')
+            # Log model artifact
             mlflow.sklearn.log_model(
                 model,
-                name="model",
+                artifact_path="model",
                 registered_model_name=None,  # register best only
             )
 
@@ -173,17 +202,20 @@ def run_training():
     print(f"{'='*60}")
 
     model_uri = f"runs:/{best_run_id}/model"
-    mv = mlflow.register_model(model_uri, REGISTERED_MODEL_NAME)
-    print(f"  Registered version: {mv.version}")
+    try:
+        mv = mlflow.register_model(model_uri, REGISTERED_MODEL_NAME)
+        print(f"  Registered version: {mv.version}")
 
-    # Transition to Production
-    client = mlflow.tracking.MlflowClient()
-    client.transition_model_version_stage(
-        name=REGISTERED_MODEL_NAME,
-        version=mv.version,
-        stage="Production",
-    )
-    print(f"  Model transitioned to Production.")
+        # Transition to Production
+        client = mlflow.tracking.MlflowClient()
+        client.transition_model_version_stage(
+            name=REGISTERED_MODEL_NAME,
+            version=mv.version,
+            stage="Production",
+        )
+        print(f"  Model transitioned to Production.")
+    except Exception as e:
+        print(f"  Model registry step skipped (expected on DagsHub S3 remote): {e}")
 
     # Save summary
     summary = {

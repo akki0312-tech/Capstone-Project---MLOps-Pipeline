@@ -1,0 +1,6 @@
+[core]
+    remote = origin
+['remote "origin"']
+    url = https://dagshub.com/akkshay0312/Capstone-Project---MLOps-Pipeline.dvc
+    auth = basic
+    user = akkshay0312

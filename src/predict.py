@@ -16,13 +16,29 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import load_scaler, get_feature_names
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-MLFLOW_TRACKING_URI = os.environ.get(
-    "MLFLOW_TRACKING_URI",
-    f"sqlite:///{(_PROJECT_ROOT / 'mlflow.db').as_posix()}",
-)
+DAGSHUB_USERNAME = "akkshay0312"
+DAGSHUB_REPO     = "Capstone-Project---MLOps-Pipeline"
+DAGSHUB_TOKEN    = os.environ.get("DAGSHUB_TOKEN", "")
+_PROJECT_ROOT    = Path(__file__).resolve().parent.parent
 REGISTERED_MODEL_NAME = "BreastCancerClassifier"
 MODELS_DIR = str(_PROJECT_ROOT / "models")
+
+
+def _setup_mlflow():
+    if DAGSHUB_TOKEN:
+        try:
+            import dagshub
+            dagshub.init(
+                repo_owner=DAGSHUB_USERNAME,
+                repo_name=DAGSHUB_REPO,
+                mlflow=True,
+            )
+            return
+        except Exception:
+            pass
+    mlflow.set_tracking_uri(
+        f"sqlite:///{(_PROJECT_ROOT / 'mlflow.db').as_posix()}"
+    )
 
 # ── Lazy-loaded globals ───────────────────────────────────────────────────────
 _model = None
@@ -36,7 +52,7 @@ def _load_model():
     if _model is not None:
         return _model
 
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    _setup_mlflow()
     model_uri = f"models:/{REGISTERED_MODEL_NAME}/Production"
     try:
         _model = mlflow.sklearn.load_model(model_uri)

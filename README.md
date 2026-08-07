@@ -177,3 +177,25 @@ The workflow in `.github/workflows/ci.yml` runs on every push/PR:
 | Containerization | Docker |
 | CI/CD | GitHub Actions |
 | Testing | pytest |
+
+---
+
+## 📸 Project Screenshots
+
+### 1. MLflow Experiments (DagsHub)
+![MLflow Experiments](screenshots/07_mlflow_experiments.png)
+
+### 2. MLflow All Models
+![MLflow Runs](screenshots/08_mlflow_runs_all3_models.png)
+
+### 3. MLflow Model Registry
+![MLflow Model Registry](screenshots/09_mlflow_model_registry.png)
+
+### 4. FastAPI Swagger UI
+![FastAPI Swagger UI](screenshots/10_fastapi_swagger_ui_full.png)
+
+### 5. FastAPI Prediction Output
+![FastAPI Prediction](screenshots/11_fastapi_predict_response.png)
+
+### 6. GitHub Actions Success
+![GitHub Actions Success](screenshots/06_github_actions_success.png)
